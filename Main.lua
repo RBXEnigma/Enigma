@@ -1,6 +1,6 @@
 --SETTINGS
 
-local debugEnabled = false
+local debugEnabled = true
 
 UserInputService = game:GetService("UserInputService")
 Players = game:GetService("Players")
@@ -20,50 +20,32 @@ function runcmd(command, args)
     if not debugEnabled then
         pcall(function()
             command = string.lower(command)
-            print(cmds[command][1])
-            CMD[cmds[command][1]](args)
+            --print(cmds[command][1])
+            cmds[command]['FUNC'](args)
         end)
     else
         command = string.lower(command)
-        print(cmds[command][1])
-        CMD[cmds[command][1]](args)
+        --print(cmds[command]['FUNC'])
+        cmds[command]['FUNC'](args)
     end
 end
 
 function findcmd(command)
-    local extraargs = nil
-    local commandtable = {}
     CmdInfo.Text = ""
     if cmds[command[1]] then
-        if cmds[command[1]][3] then
-            CmdInfo.Text = cmds[command[1]][3]
-        elseif cmds[command[1]][2] then
-            CmdInfo.Text = cmds[command[1]][2]
+        CmdInfo.Text = cmds[command[1]]['DESC']
+        if not command[2] and cmds[command[1]]['PARAMS'] ~= {} then
+            return command[1].." "..table.concat(cmds[command[1]]['PARAMS']," ")
+        elseif not command[2] then
+            return command[1]
         end
-        if not command[2] then
-            if not cmds[command[1][3]] then
-                return command[1].." "..table.concat(cmds[command[1]][2]," ")
-            else
-                return command[1]
-            end
-        else
-            --print(cmds[command[1]][2][1])
-            if not cmds[command[1][3]] then
-                commandtable = table.clone(cmds[command[1]][2])
-            else
-                commandtable = {}
-            end
-            for i = 1, #command - 1 do
-                if command[i + 1] ~= "" then
-                    table.remove(commandtable,1)
-                end
-            end
-            if string.sub(TextBox.Text,#TextBox.Text,#TextBox.Text) == " " then
-                return string.sub(TextBox.Text,1,#TextBox.Text-1).." "..table.concat(commandtable," ")
-            else
-                return TextBox.Text.." "..table.concat(commandtable," ")
+        local commandtable = table.clone(cmds[command[1]]['PARAMS'])
+        for i = 1, #command - 1 do
+            if command[i + 1] ~= "" then
+                table.remove(commandtable,1)
             end
         end
+        return string.sub(TextBox.Text,1,#TextBox.Text-1).." "..table.concat(commandtable," ")
     end
     if command[1] == "" then return "" end
 	for i = 1, commandcount do
@@ -73,6 +55,15 @@ function findcmd(command)
 		end
 	end
     return ""
+end
+cmds = {}
+function addcmd(name,desc,alias,params,func)
+    cmds[name] = {FUNC=func,DESC=desc,PARAMS=params}
+    if alias ~= {} then
+        for i,v in pairs(alias) do
+            cmds[v] = {FUNC=func,DESC=desc,PARAMS=params}
+        end
+    end
 end
 main = Instance.new("ScreenGui", game.CoreGui)
 main.Name = randomString()
@@ -295,6 +286,7 @@ function createMenu()
 end
 --createMenu()
 CMD = {}
+--[[
 cmds = {
 ["walkspeed"] = {"walkspeed",{"[Speed]"},"Changes your walkspeed"},
 ["ws"] = {"walkspeed",{"[Speed]"},"Changes your walkspeed"},
@@ -337,22 +329,19 @@ cmds = {
 ["ununfocusedcpu"] = {"ununfocusedcpu","Disables unfocusedcpu"},
 ["hitbox"] = {"hitbox",{"[Player]","[Size]"},"Changes other player's hitboxes"},
 ["reach"] = {"reach",{"[Size]"},"Gives your equipped tool reach"},
+["commands"] = {"commands","Lists all commands"},
 }
+--]]
 commandnametable = {}
 commandcount = 0 
-for i, v in pairs(cmds) do
-	commandcount += 1
-    table.insert(commandnametable,i)
-end
-function CMD.walkspeed(args)
+addcmd("walkspeed", "Changes your walkspeed", {"ws"}, {"[Speed]"},function(args)
 	Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = args[1]
-end
-
-function CMD.jumppower(args)
+end)
+addcmd("jumppower", "Changes your jump power", {"jp"}, {"[Jump power]"},function(args)
 	Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = args[1]
-end
+end)
 
-function CMD.nameprotect(args)
+addcmd("nameprotect", "Hides everyone's username", {}, {"(Name)"},function(args)
 	for i,v in ipairs(Players:GetPlayers()) do
         if args[1] == nil then
 		    v.Name = randomString()
@@ -411,13 +400,13 @@ function CMD.nameprotect(args)
             end
 		end)
 	end)
-end
+end)
 
-function CMD.gravity(args)
+addcmd("gravity", "Changes your gravity", {"grav"}, {"[Gravity]"},function(args)
 	workspace.Gravity = args[1]
-end
+end)
 
-function CMD.infjump()
+addcmd("infinitejump", "Lets you jump in the air", {"infjump"}, {},function(args)
 	UserInputService.InputBegan:Connect(function(input)
 		if (UserInputService:GetFocusedTextBox()) then
 			return
@@ -426,33 +415,33 @@ function CMD.infjump()
 			Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
 		end
 	end)
-end
+end)
 
-function CMD.removezoomlimit()
+addcmd("removezoomlimit", "Lets you zoom out infinitely", {}, {},function(args)
 	Players.LocalPlayer.CameraMaxZoomDistance = math.huge
 	Players.LocalPlayer.CameraMinZoomDistance = 0
-end
+end)
 
-function CMD.freeze()
+addcmd("freeze", "Freezes your character", {"fr"}, {},function(args)
 	for i,v in ipairs(game.Players.LocalPlayer.Character:GetChildren()) do
 		if v:IsA("BasePart") then
 			v.Anchored = true
 		end
 	end
-end
+end)
 
-function CMD.unfreeze()
+addcmd("unfreeze", "Unfreezes your character", {"unfr"}, {},function(args)
 	for i,v in ipairs(Players.LocalPlayer.Character:GetChildren()) do
 		if v:IsA("BasePart") then
 			v.Anchored = false
 		end
 	end
-end
-function CMD.sit()
+end)
+addcmd("sit", "Makes you sit", {}, {},function(args)
 	Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Sit = true
-end
+end)
 
-function CMD.spin(args)
+addcmd("spin", "Makes you spin", {}, {"[Speed]"},function(args)
 	if Players.LocalPlayer.Character.HumanoidRootPart:FindFirstChild("Spin") then
 		Players.LocalPlayer.Character.HumanoidRootPart.Spin:Destroy()
 	end
@@ -461,19 +450,19 @@ function CMD.spin(args)
 	Spin.Parent = Players.LocalPlayer.Character.HumanoidRootPart
 	Spin.MaxTorque = Vector3.new(0, math.huge, 0)
 	Spin.AngularVelocity = Vector3.new(0,args[1],0)
-end
+end)
 
-function CMD.unspin(args)
+addcmd("unspin", "Stops spinning", {}, {},function(args)
 	if Players.LocalPlayer.Character.HumanoidRootPart:FindFirstChild("Spin") then
 		Players.LocalPlayer.Character.HumanoidRootPart.Spin:Destroy()
 	end
-end
+end)
 
-function CMD.reset()
+addcmd("reset", "Kills you", {"respawn"}, {},function(args)
     game.Players.LocalPlayer.Character:BreakJoints()
-end
+end)
 
-function CMD.xray(args)
+addcmd("xray", "Lets you see through walls", {}, {"(Transparency)"},function(args)
     for i,v in ipairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") and not v.Parent:FindFirstChildOfClass('Humanoid') then
         	if args[1] then
@@ -483,60 +472,60 @@ function CMD.xray(args)
             end
         end
     end
-end
+end)
 
-function CMD.noxray()
+addcmd("unxray", "Disables xray", {"noxray"}, {},function(args)
     for i,v in ipairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") and not v.Parent:FindFirstChildOfClass('Humanoid') then
             v.LocalTransparencyModifier = 0
         end
     end
-end
+end)
 
-function CMD.view(args)
+addcmd("view", "Views another player", {"spectate","watch"}, {"[Player]"},function(args)
     workspace.CurrentCamera.CameraSubject = Players[quickFind(args[1])].Character
-end
+end)
 
-function CMD.unview(args)
+addcmd("unview", "Unviews a player", {"unspectate","unwatch"}, {},function(args)
     workspace.CurrentCamera.CameraSubject = Players.LocalPlayer.Character
-end
+end)
 
-function CMD.equiptools()
+addcmd("equiptools", "Equips all your tools", {}, {},function(args)
     for i,v in ipairs(Players.LocalPlayer:FindFirstChildOfClass("Backpack"):GetChildren()) do
 		if v:IsA("Tool") then
 			v.Parent = Players.LocalPlayer.Character
 		end
 	end
-end
+end)
 
-function CMD.btools()
+addcmd("buildertools", "Gives you clientsided builder tools", {"btools"}, {},function(args)
     local CloneTool = Instance.new("HopperBin", Players.LocalPlayer.Backpack)
 	CloneTool.BinType = "Clone"
 	local HammerTool = Instance.new("HopperBin", Players.LocalPlayer.Backpack)
 	HammerTool.BinType = "Hammer"
 	local GrabTool = Instance.new("HopperBin", Players.LocalPlayer.Backpack)
 	GrabTool.BinType = "Grab"
-end
+end)
 
-function CMD.fov(args)
+addcmd("fov", "Changes your fov", {}, {"[Fov]"},function(args)
     workspace.Camera.FieldOfView = args[1]
-end
+end)
 
-function CMD.print(args)
+addcmd("print", "Prints text in the console", {}, {"[Text]"},function(args)
     print(table.concat(args," "))
-end
+end)
 
-function CMD.warn(args)
+addcmd("warn", "Puts a warning in the console", {}, {"[Text]"},function(args)
     warn(table.concat(args," "))
-end
+end)
 
-function CMD.disable(args)
+addcmd("disable", "Disables Enigma", {}, {},function(args)
     main:Destroy()
     script:Destroy()
-end
+end)
 
 local Noclipping
-function CMD.noclip(args)
+addcmd("noclip", "Lets you walk through walls", {}, {},function(args)
 	local function NoclipLoop()
 		if Players.LocalPlayer.Character ~= nil then
 			for i, v in pairs(Players.LocalPlayer.Character:GetDescendants()) do
@@ -547,9 +536,9 @@ function CMD.noclip(args)
 		end
 	end
 	Noclipping = RunService.Stepped:Connect(NoclipLoop)
-end
+end)
 
-function CMD.unnoclip(args)
+addcmd("clip", "Undoes noclip", {}, {},function(args)
 	if Noclipping then
 		Noclipping:Disconnect()
         for i, v in pairs(Players.LocalPlayer.Character:GetDescendants()) do
@@ -558,9 +547,9 @@ function CMD.unnoclip(args)
             end
         end
 	end
-end
+end)
 theflything = nil
-function CMD.fly(args)
+addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
     if not theflything then
         theflything = true
         local camera = game:GetService("Workspace").CurrentCamera
@@ -643,29 +632,29 @@ function CMD.fly(args)
     else
         setFlying(true)
     end
-end
+end)
 
-function CMD.unfly()
+addcmd("unfly", "Stops flying", {}, {},function(args)
     setFlying(false)
-end
+end)
 
-function CMD.nodecals()
+addcmd("nodecals", "Deletes all decals", {"removedecals"}, {},function(args)
     for i,v in ipairs(workspace:GetDescendants()) do
         if v:IsA("Decal") then
             v:Destroy()
         end
     end
-end
+end)
 
-function CMD.norender()
+addcmd("norender", "Disables rendering", {}, {},function(args)
     RunService:Set3dRenderingEnabled(false)
-end
+end)
 
-function CMD.render()
+addcmd("render", "Enables rendering", {}, {},function(args)
     RunService:Set3dRenderingEnabled(true)
-end
+end)
 
-function CMD.unfocusedcpu()
+addcmd("unfocusedcpu", "Disables rendering and caps fps when window isn't focused", {}, {},function(args)
     unfocusedcpuexists = true
     notwindow = UserInputService.WindowFocusReleased:Connect(function()
         RunService:Set3dRenderingEnabled(false)
@@ -676,17 +665,17 @@ function CMD.unfocusedcpu()
         RunService:Set3dRenderingEnabled(true)
         setfpscap(60)
     end)
-end
+end)
 
-function CMD.ununfocusedcpu()
+addcmd("ununfocusedcpu", "Disables unfocusedcpu", {}, {},function(args)
     if unfocusedcpuexists then
         unfocusedcpuexists = nil
         yeswindow:Disconnect()
         notwindow:Disconnect()
     end
-end
+end)
 
-function CMD.hitbox(args)
+addcmd("hitbox", "Changes a character's hitbox", {}, {"[Player]","[Size]"},function(args)
     if args[1] == "others" or args[1] == "all" then
         for i,v in pairs(Players:GetPlayers()) do
             if v ~= Players.LocalPlayer and v.Character:FindFirstChild('HumanoidRootPart') then
@@ -706,9 +695,9 @@ function CMD.hitbox(args)
         hrp.Size = Vector3.new(args[2],args[2],args[2])
         hrp.Transparency = 0.6
     end
-end
+end)
 
-function CMD.reach(args)
+addcmd("reach", "Gives your equipped tool reach", {}, {"[Distance]"},function(args)
     for i,v in pairs(Players.LocalPlayer.Character:GetDescendants()) do
 		if v:IsA("Tool") then
             if not v:FindFirstChild("toolSB") then
@@ -723,4 +712,146 @@ function CMD.reach(args)
 			v.GripPos = Vector3.new(0,0,0)
 		end
 	end
+end)
+
+addcmd("commands", "lists all commands", {}, {},function(args)
+    local Folder = Instance.new("Folder")
+    local Frame = Instance.new("Frame")
+    local Close = Instance.new("TextButton")
+    local Title = Instance.new("TextLabel")
+    local Frame_2 = Instance.new("ScrollingFrame")
+    local AntiList = Instance.new("Folder")
+    local UIListLayout = Instance.new("UIListLayout")
+
+    Folder.Parent = main
+    Folder.Name = "CommandsList"
+
+    Frame.Parent = Folder
+    Frame.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
+    Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame.BorderSizePixel = 0
+    Frame.Position = UDim2.new(0.355569512, 0, 0.280797094, 0)
+    Frame.Size = UDim2.new(0, 358, 0, 133)
+
+    Close.Name = "Close"
+    Close.Parent = Frame
+    Close.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
+    Close.BackgroundTransparency = 1.000
+    Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Close.BorderSizePixel = 0
+    Close.Position = UDim2.new(0.935784519, 0, 0, 0)
+    Close.Size = UDim2.new(0.0643641427, 0, 0.131205678, 0)
+    Close.Font = Enum.Font.GothamBold
+    Close.Text = "X"
+    Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Close.TextScaled = true
+    Close.TextSize = 14.000
+    Close.TextWrapped = true
+
+    Title.Name = "Title"
+    Title.Parent = Frame
+    Title.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
+    Title.BackgroundTransparency = 1.000
+    Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Title.BorderSizePixel = 0
+    Title.Position = UDim2.new(0.465172976, 0, 0.0638298392, 0)
+    Title.Size = UDim2.new(0.941223323, 0, 0.131205678, 0)
+    Title.Font = Enum.Font.GothamBold
+    Title.Text = "Commands"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextScaled = true
+    Title.TextSize = 14.000
+    Title.TextWrapped = true
+
+    Frame_2.Name = "Frame"
+    Frame_2.Parent = Frame
+    Frame_2.BackgroundColor3 = Color3.fromRGB(34, 32, 48)
+    Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_2.BorderSizePixel = 0
+    Frame_2.ClipsDescendants = false
+    Frame_2.Position = UDim2.new(8.52446291e-08, 0, 0.131205618, 0)
+    Frame_2.Selectable = false
+    Frame_2.Size = UDim2.new(0.999997437, 0, 1.7334559, 0)
+    Frame_2.BottomImage = ""
+    Frame_2.CanvasSize = UDim2.new(0, 0, 10, 0)
+    Frame_2.MidImage = ""
+    Frame_2.ScrollBarThickness = 0
+    Frame_2.TopImage = ""
+    Frame_2.ClipsDescendants = true
+
+    UIListLayout.Parent = Frame_2
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    local gui = Frame
+
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    function Lerp(a, b, m)
+        return a + (b - a) * m
+    end;
+
+    local lastMousePos
+    local lastGoalPos
+    local DRAG_SPEED = (8); -- // The speed of the UI darg.
+    function Update(dt)
+        if not (startPos) then return end;
+        if not (dragging) and (lastGoalPos) then
+            gui.Position = UDim2.new(startPos.X.Scale, Lerp(gui.Position.X.Offset, lastGoalPos.X.Offset, dt * DRAG_SPEED), startPos.Y.Scale, Lerp(gui.Position.Y.Offset, lastGoalPos.Y.Offset, dt * DRAG_SPEED))
+            return 
+        end;
+
+        local delta = (lastMousePos - UserInputService:GetMouseLocation())
+        local xGoal = (startPos.X.Offset - delta.X);
+        local yGoal = (startPos.Y.Offset - delta.Y);
+        lastGoalPos = UDim2.new(startPos.X.Scale, xGoal, startPos.Y.Scale, yGoal)
+        gui.Position = UDim2.new(startPos.X.Scale, Lerp(gui.Position.X.Offset, xGoal, dt * DRAG_SPEED), startPos.Y.Scale, Lerp(gui.Position.Y.Offset, yGoal, dt * DRAG_SPEED))
+    end;
+
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+            lastMousePos = UserInputService:GetMouseLocation()
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    RunService.Heartbeat:Connect(Update)
+
+    Close.MouseButton1Down:Connect(function()
+        Frame:Destroy()
+    end)
+    for i,v in pairs(cmds) do
+        local Command = Instance.new("TextLabel")
+        Command.Name = i
+        Command.Parent = Frame_2
+        Command.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Command.BackgroundTransparency = 1.000
+        Command.Size = UDim2.new(0.996999979, 0, 0.0120000001, 0)
+        Command.Font = Enum.Font.Gotham
+        Command.Text = i
+        Command.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Command.TextSize = 14.000
+        Command.TextXAlignment = Enum.TextXAlignment.Left
+        task.wait()
+    end
+end)
+for i, v in pairs(cmds) do
+	commandcount += 1
+    table.insert(commandnametable,i)
 end
