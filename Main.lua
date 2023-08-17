@@ -1,6 +1,6 @@
 --SETTINGS
-
-local debugEnabled = true
+local start = tick()
+local debugEnabled = false
 
 UserInputService = game:GetService("UserInputService")
 Players = game:GetService("Players")
@@ -8,6 +8,7 @@ RunService = game:GetService("RunService")
 ContextActionService = game:GetService("ContextActionService")
 TweenService = game:GetService("TweenService")
 RunService = game:GetService("RunService")
+StarterGui = game:GetService("StarterGui")
 function randomString(length)
 	local length = math.random(5,20)
 	local array = {}
@@ -161,177 +162,7 @@ function quickFind(name)
 end
 game.StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.EmotesMenu, false)
 
-function createMenu()
-    local Menu = Instance.new("Folder")
-    local Frame = Instance.new("Frame")
-    local Close = Instance.new("TextButton")
-    local Title = Instance.new("TextLabel")
-    local UICorner = Instance.new("UICorner")
-    local Frame_2 = Instance.new("Frame")
-    local UICorner_2 = Instance.new("UICorner")
-    local NoCorner = Instance.new("Frame")
-
-    Menu.Name = "Menu"
-    Menu.Parent = main
-
-    Frame.Parent = Menu
-    Frame.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
-    Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    Frame.BorderSizePixel = 0
-    Frame.Position = UDim2.new(0.355569512, 0, 0.112318836, 0)
-    Frame.Size = UDim2.new(0.154078051, 0, 0.628342271, 0)
-
-    Close.Name = "Close"
-    Close.Parent = Frame
-    Close.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
-    Close.BackgroundTransparency = 1.000
-    Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    Close.BorderSizePixel = 0
-    Close.Position = UDim2.new(0.798913062, 0, 0, 0)
-    Close.Size = UDim2.new(0.201235682, 0, 0.131205678, 0)
-    Close.Font = Enum.Font.GothamBold
-    Close.Text = "X"
-    Close.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Close.TextScaled = true
-    Close.TextSize = 14.000
-    Close.TextWrapped = true
-
-    Title.Name = "Title"
-    Title.Parent = Frame
-    Title.AnchorPoint = Vector2.new(0.5, 0.5)
-    Title.BackgroundColor3 = Color3.fromRGB(17, 18, 25)
-    Title.BackgroundTransparency = 1.000
-    Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    Title.BorderSizePixel = 0
-    Title.Position = UDim2.new(0.391593754, 0, 0.0638297871, 0)
-    Title.Size = UDim2.new(0.794065118, 0, 0.131205678, 0)
-    Title.Font = Enum.Font.GothamBold
-    Title.Text = "Title"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.TextScaled = true
-    Title.TextSize = 14.000
-    Title.TextWrapped = true
-
-    UICorner.CornerRadius = UDim.new(0.0500000007, 0)
-    UICorner.Parent = Frame
-
-    Frame_2.Parent = Frame
-    Frame_2.BackgroundColor3 = Color3.fromRGB(34, 32, 48)
-    Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    Frame_2.BorderSizePixel = 0
-    Frame_2.Position = UDim2.new(0, 0, 0.131205678, 0)
-    Frame_2.Size = UDim2.new(0.999997497, 0, 0.868794322, 0)
-
-    UICorner_2.CornerRadius = UDim.new(0.0500000007, 0)
-    UICorner_2.Parent = Frame_2
-
-    NoCorner.Name = "NoCorner"
-    NoCorner.Parent = Frame_2
-    NoCorner.BackgroundColor3 = Color3.fromRGB(34, 32, 48)
-    NoCorner.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    NoCorner.BorderSizePixel = 0
-    NoCorner.Position = UDim2.new(-1.65856406e-07, 0, -0.00115745713, 0)
-    NoCorner.Size = UDim2.new(0.999997675, 0, 0.0479409993, 0)
-    local gui = Frame
-
-    local dragging
-    local dragInput
-    local dragStart
-    local startPos
-
-    function Lerp(a, b, m)
-        return a + (b - a) * m
-    end;
-
-    local lastMousePos
-    local lastGoalPos
-    local DRAG_SPEED = (8); -- // The speed of the UI darg.
-    function Update(dt)
-        if not (startPos) then return end;
-        if not (dragging) and (lastGoalPos) then
-            gui.Position = UDim2.new(startPos.X.Scale, Lerp(gui.Position.X.Offset, lastGoalPos.X.Offset, dt * DRAG_SPEED), startPos.Y.Scale, Lerp(gui.Position.Y.Offset, lastGoalPos.Y.Offset, dt * DRAG_SPEED))
-            return 
-        end;
-
-        local delta = (lastMousePos - UserInputService:GetMouseLocation())
-        local xGoal = (startPos.X.Offset - delta.X);
-        local yGoal = (startPos.Y.Offset - delta.Y);
-        lastGoalPos = UDim2.new(startPos.X.Scale, xGoal, startPos.Y.Scale, yGoal)
-        gui.Position = UDim2.new(startPos.X.Scale, Lerp(gui.Position.X.Offset, xGoal, dt * DRAG_SPEED), startPos.Y.Scale, Lerp(gui.Position.Y.Offset, yGoal, dt * DRAG_SPEED))
-    end;
-
-    gui.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = gui.Position
-            lastMousePos = UserInputService:GetMouseLocation()
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    gui.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-
-    RunService.Heartbeat:Connect(Update)
-
-end
---createMenu()
 CMD = {}
---[[
-cmds = {
-["walkspeed"] = {"walkspeed",{"[Speed]"},"Changes your walkspeed"},
-["ws"] = {"walkspeed",{"[Speed]"},"Changes your walkspeed"},
-["jumppower"] = {"jumppower",{"[Jump Power]"},"Changes your jump power"},
-["jp"] = {"jumppower",{"[Jump Power]"},"Changes your jump power"},
-["nameprotect"] = {"nameprotect",{"(Name)"},"Hides everyone's name, Useful for recording"},
-["gravity"] = {"gravity",{"[Gravity]"},"Changes your gravity"},
-["grav"] = {"gravity",{"[Gravity]"},"Changes your gravity"},
-["infjump"] = {"infjump","Lets you jump in the air"},
-["removezoomlimit"] = {"removezoomlimit","Lets you zoom out infinitely"},
-["zoom"] = {"removezoomlimit","Lets you zoom out infinitely"},
-["freeze"] = {"freeze","Freezes your character"},
-["fr"] = {"freeze","Freezes your character"},
-["unfreeze"] = {"unfreeze","Unfreezes your character"},
-["unfr"] = {"unfreeze","Unfreezes your character"},
-["sit"] = {"sit","Makes your character sit"},
-["spin"] ={"spin",{"[Spin Speed]"},"Makes your character spin"},
-["unspin"] = {"unspin","Stops spinning"},
-["xray"] = {"xray",{"(Transparency)"},"Allows you to see through blocks"},
-["noxray"] = {"noxray","disables xray"},
-["unxray"] = {"noxray","disables xray"},
-["view"] = {"view",{"[Username]"},"Allows you to spectate a player"},
-["unview"] = {"unview","Stops viewing/spectating"},
-["spectate"] = {"view",{"[Username]"},"Allows you to spectate a player"},
-["equiptools"] = {"equiptools","Makes you equip all the tools you have in your backpack"},
-["btools"] = {"btools","Gives you clientsided builder tools"},
-["fov"] = {"fov",{"[Fov]"},"Changes your field of view"},
-["print"] = {"print",{"[Text]"},"Prints text in the console"},
-["warn"] = {"warn",{"[Text]"},"Sends a warning in the console"},
-["disable"] = {"disable","Disables Enigma"},
-["noclip"] = {"noclip","Allows you to walk through walls"},
-["unnoclip"] = {"unnoclip","Stops noclipping"},
-["clip"] = {"unnoclip","Stops noclipping"},
-["fly"] = {"fly",{"[Speed]"},"Lets your character fly"},
-["unfly"] = {"unfly","Stops flying"},
-["nodecals"] = {"nodecals","Deletes all decals"},
-["render"] = {"render","Enables 3d rendering"},
-["norender"] = {"norender","Disables 3d rendering"},
-["unfocusedcpu"] = {"unfocusedcpu","Caps your fps and disables rendering when your window isn't focused"},
-["ununfocusedcpu"] = {"ununfocusedcpu","Disables unfocusedcpu"},
-["hitbox"] = {"hitbox",{"[Player]","[Size]"},"Changes other player's hitboxes"},
-["reach"] = {"reach",{"[Size]"},"Gives your equipped tool reach"},
-["commands"] = {"commands","Lists all commands"},
-}
---]]
 commandnametable = {}
 commandcount = 0 
 addcmd("walkspeed", "Changes your walkspeed", {"ws"}, {"[Speed]"},function(args)
@@ -714,7 +545,7 @@ addcmd("reach", "Gives your equipped tool reach", {}, {"[Distance]"},function(ar
 	end
 end)
 
-addcmd("commands", "lists all commands", {}, {},function(args)
+addcmd("commands", "lists all commands", {"cmds","help"}, {},function(args)
     local Folder = Instance.new("Folder")
     local Frame = Instance.new("Frame")
     local Close = Instance.new("TextButton")
@@ -851,7 +682,38 @@ addcmd("commands", "lists all commands", {}, {},function(args)
         task.wait()
     end
 end)
+
+addcmd("bunnyhop", "Makes you automatically jump", {"bhop"}, {},function(args)
+    if not bhopexists then
+        bhopexists = Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").StateChanged:Connect(function(oldstate,newstate)
+            if newstate == Enum.HumanoidStateType.Landed then
+                Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+            end
+        end)
+        Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+addcmd("unbunnyhop", "Disables bunnyhop", {"unbhop"}, {},function(args)
+    if bhopexists then
+        bhopexists:Disconnect()
+        bhopexists = nil
+    end
+end)
+
+addcmd("stat", "Changes a leaderstat clientsidedly", {"leaderstat"}, {"[stat]","[Value]"},function(args)
+    Players.LocalPlayer.leaderstats[args[1]].Value = args[2]
+end)
+
 for i, v in pairs(cmds) do
 	commandcount += 1
     table.insert(commandnametable,i)
+end
+StarterGui:SetCore("SendNotification", {
+	Title = "Enigma";
+	Text = "Thanks for using enigma to enable the ui press .";
+	Duration = 8;
+})
+if debugEnabled then
+    print("Enigma loaded in: "..(tick() - start).."s")
 end
