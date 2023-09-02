@@ -1,7 +1,15 @@
---SETTINGS
-local start = tick()
-local debugEnabled = false
+--[[
+IMPORTANT NOTE FOR ANYONE READING THE CODE
 
+Some commands were taken from other scripts and slightly modified as i cba to remake everything (like why would i remake the exact same thing when someone already did it)
+Though everything that isn't commands was made by me and was kinda based on infinite yield's command system but no code was taken from it
+--]]
+
+local start = tick()
+--SETTINGS
+local debugEnabled = true
+
+--CODE
 UserInputService = game:GetService("UserInputService")
 Players = game:GetService("Players")
 RunService = game:GetService("RunService")
@@ -9,6 +17,8 @@ ContextActionService = game:GetService("ContextActionService")
 TweenService = game:GetService("TweenService")
 RunService = game:GetService("RunService")
 StarterGui = game:GetService("StarterGui")
+Lighting = game:GetService("Lighting")
+ReplicatedStorage = game:GetService("ReplicatedStorage")
 function randomString(length)
 	local length = math.random(5,20)
 	local array = {}
@@ -124,8 +134,7 @@ TextBox.FocusLost:Connect(function(enter)
         CmdInfo.Visible = false
         AutoComplete.Visible = false
 		local split = string.split(TextBox.Text, " ")
-		local args = split
-		local split = string.split(TextBox.Text, " ")
+		local args = table.clone(split)
 		table.remove(args,1)
 		runcmd(split[1],args)
 		--CMD[string.lower(split[1])](args)
@@ -381,6 +390,7 @@ addcmd("clip", "Undoes noclip", {}, {},function(args)
 end)
 theflything = nil
 addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
+    speedmulti = args[1]
     if not theflything then
         theflything = true
         local camera = game:GetService("Workspace").CurrentCamera
@@ -409,7 +419,7 @@ addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
             character:WaitForChild("Animate").Disabled = isFlying
         end
 
-        local function onUpdate(dt)
+        function onUpdate(dt)
             if isFlying then
                 local cf = camera.CFrame
                 local direction = cf.RightVector * (movement.right - movement.left) + cf.LookVector * (movement.forward - movement.backward)
@@ -417,7 +427,7 @@ addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
                     direction = direction.Unit
                 end
                 bodyGyro.CFrame = cf
-                bodyVel.Velocity = direction * humanoid.WalkSpeed * 3
+                bodyVel.Velocity = direction * 32 * speedmulti
             end
         end
         --[[
@@ -454,7 +464,7 @@ addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
         ContextActionService:BindAction("backward", movementBind, false, Enum.PlayerActions.CharacterBackward)
         ContextActionService:BindAction("left", movementBind, false, Enum.PlayerActions.CharacterLeft)
         ContextActionService:BindAction("right", movementBind, false, Enum.PlayerActions.CharacterRight)
-        game:GetService("RunService").RenderStepped:Connect(onUpdate)
+        RunService.RenderStepped:Connect(onUpdate)
         setFlying(true)
         local toggler = Players.LocalPlayer.CharacterAdded:Connect(function()
             theflything = false
@@ -462,6 +472,7 @@ addcmd("fly", "Makes you fly", {}, {"(Speed)"},function(args)
         end)
     else
         setFlying(true)
+        
     end
 end)
 
@@ -703,6 +714,107 @@ end)
 
 addcmd("stat", "Changes a leaderstat clientsidedly", {"leaderstat"}, {"[stat]","[Value]"},function(args)
     Players.LocalPlayer.leaderstats[args[1]].Value = args[2]
+end)
+
+addcmd("fullbright", "Makes everything brighter", {}, {},function(args)
+    Lighting.Brightness = 2
+	Lighting.ClockTime = 14
+	Lighting.FogEnd = 10000000000
+	Lighting.GlobalShadows = false
+	Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+end)
+
+addcmd("swim", "Lets you swim in the air", {}, {},function(args)
+    oldgrav = workspace.Gravity
+	workspace.Gravity = 0
+    local enums = Enum.HumanoidStateType:GetEnumItems()
+	table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+	for i, v in pairs(enums) do
+		Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(v, false)
+	end
+    Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Swimming)
+    swimbeat = RunService.Heartbeat:Connect(function()
+        pcall(function()
+            Players.LocalPlayer.Character.HumanoidRootPart.Velocity = ((Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid").MoveDirection ~= Vector3.new() or UserInputService:IsKeyDown(Enum.KeyCode.Space)) and Players.LocalPlayer.HumanoidRootPart.Velocity or Vector3.new())
+        end)
+    end)
+end)
+
+addcmd("unswim", "Disables swim", {}, {},function(args)
+    local enums = Enum.HumanoidStateType:GetEnumItems()
+	table.remove(enums, table.find(enums, Enum.HumanoidStateType.None))
+	for i, v in pairs(enums) do
+		Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):SetStateEnabled(v, true)
+	end
+    workspace.Gravity = oldgrav
+    swimbeat:Disconnect()
+end)
+
+addcmd("discord", "Join the discord", {"invite"}, {},function(args)
+    if setclipboard then
+        setclipboard("https://discord.gg/585GqJHJrw")
+    end
+    StarterGui:SetCore("SendNotification", {
+        Title = "Copied to clipboard";
+        Text = "https://discord.gg/585GqJHJrw";
+        Duration = 15;
+    })
+end)
+
+addcmd("jobid", "Copy the jobid to your clipboard", {}, {},function(args)
+    if setclipboard then
+        setclipboard(game.jobid)
+        StarterGui:SetCore("SendNotification", {
+            Title = "Enigma";
+            Text = "Copied to clipboard";
+            Duration = 5;
+        })
+    else
+        StarterGui:SetCore("SendNotification", {
+            Title = "Enigma";
+            Text = "Your exploit doesn't support setclipboard";
+            Duration = 5;
+        })
+    end
+end)
+
+addcmd("fullbright", "Makes everything brighter", {"fb"}, {},function(args)
+    Lighting.Brightness = 2
+	Lighting.ClockTime = 14
+	Lighting.FogEnd = 100000000000
+	Lighting.GlobalShadows = false
+	Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    for i,v in pairs(Lighting:GetDescendants()) do
+		if v:IsA("Atmosphere") then
+			v:Destroy()
+		end
+	end
+end)
+
+addcmd("norotate", "Stops you from automatically rotating", {}, {},function(args)
+    Players.LocalPlayer.Character.Humanoid.AutoRotate = false
+end)
+
+addcmd("unnorotate", "Undoes norotate", {"yesrotate"}, {},function(args)
+    Players.LocalPlayer.Character.Humanoid.AutoRotate = true
+end)
+
+addcmd("time", "Sets the world time", {}, {"[Hour]"},function(args)
+    Lighting.ClockTime = args[1]
+end)
+
+addcmd("chat", "Sends a message to everyone in chat", {}, {"[Message]"},function(args)
+    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(args[1], "All")
+end)
+addcmd("spam", "Spams a message to everyone in chat", {}, {"[Message]"},function(args)
+    spamming = true
+    repeat task.wait(2.5)
+        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(args[1], "All")
+    until not spamming
+end)
+
+addcmd("unspam", "Disables spam", {}, {},function(args)
+    spamming = nil
 end)
 
 for i, v in pairs(cmds) do
