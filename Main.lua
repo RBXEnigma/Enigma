@@ -19,6 +19,7 @@ RunService = game:GetService("RunService")
 StarterGui = game:GetService("StarterGui")
 Lighting = game:GetService("Lighting")
 ReplicatedStorage = game:GetService("ReplicatedStorage")
+local bindedcmds = {}
 function randomString(length)
 	local length = math.random(5,20)
 	local array = {}
@@ -56,7 +57,11 @@ function findcmd(command)
                 table.remove(commandtable,1)
             end
         end
-        return string.sub(TextBox.Text,1,#TextBox.Text-1).." "..table.concat(commandtable," ")
+        if string.sub(TextBox.Text,#TextBox.Text,#TextBox.Text) ~= " " then
+            return string.sub(TextBox.Text,1,#TextBox.Text-1).."  "..table.concat(commandtable," ")
+        else
+            return string.sub(TextBox.Text,1,#TextBox.Text-1).." "..table.concat(commandtable," ")
+        end
     end
     if command[1] == "" then return "" end
 	for i = 1, commandcount do
@@ -155,7 +160,13 @@ UserInputService.InputBegan:Connect(function(input)
             CmdInfo.Visible = true
 		end)
 	end	
-
+    if usedbinds then
+        for i,v in ipairs(bindedcmds) do
+            if input.KeyCode == Enum.KeyCode[v['KEY']] then
+		        runcmd(v['CMD'],v['ARGS'])
+            end
+        end
+    end
 end)
 TextBox:GetPropertyChangedSignal("Text"):Connect(function()
     AutoComplete.Text = findcmd(string.split(TextBox.Text, " "))
@@ -815,6 +826,28 @@ end)
 
 addcmd("unspam", "Disables spam", {}, {},function(args)
     spamming = nil
+end)
+addcmd("bind", "Binds a key to run a command", {"keybind"}, {"[Key]","[Command]","(args)"},function(args)
+    local argstable = {}
+    if args[3] then
+        for i = 1,#args - 2 do
+            table.insert(argstable,args[i + 2])
+        end
+    end
+    table.insert(bindedcmds,{
+        ['KEY'] = args[1],
+        ['CMD'] = args[2],
+        ['ARGS'] = argstable or nil
+    })
+    usedbinds = true
+end)
+
+addcmd("unbind", "Unbinds a key that runs a command", {"unkeybind"}, {"[Key]"},function(args)
+    for i,v in ipairs(bindedcmds) do
+        if v['KEY'] == args[1] then
+            table.remove(bindedcmds,i)
+        end
+    end
 end)
 
 for i, v in pairs(cmds) do
