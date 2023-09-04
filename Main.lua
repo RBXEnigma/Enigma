@@ -160,7 +160,7 @@ UserInputService.InputBegan:Connect(function(input)
             CmdInfo.Visible = true
 		end)
 	end	
-    if usedbinds then
+    if usedbinds and input.UserInputType == Enum.UserInputType.Keyboard then
         for i,v in ipairs(bindedcmds) do
             if input.KeyCode == Enum.KeyCode[v['KEY']] then
 		        runcmd(v['CMD'],v['ARGS'])
@@ -848,6 +848,31 @@ addcmd("unbind", "Unbinds a key that runs a command", {"unkeybind"}, {"[Key]"},f
             table.remove(bindedcmds,i)
         end
     end
+end)
+
+addcmd("loop", "Runs a command a specific number of times with an interval", {"repeat"}, {"[Count]","[Interval]","[Command]","(args)"},function(args)
+    local argstable = {}
+    if args[4] then
+        for i = 1,#args - 3 do
+            table.insert(argstable,args[i + 3])
+        end
+    end
+    for i = 1,args[1] do
+        runcmd(args[3],argstable)
+        task.wait(args[2])
+    end
+end)
+
+addcmd("team", "Changes your team clientsidedly", {}, {"[Team]"},function(args)
+    Players.LocalPlayer.Team = game.Teams:FindFirstChild(args[1])
+end)
+
+addcmd("noshadows", "Removes shadows", {}, {},function(args)
+    Lighting.GlobalShadows = false
+end)
+
+addcmd("yesshadows", "Restores shadows", {"unnoshadows","shadows"}, {},function(args)
+    Lighting.GlobalShadows = true
 end)
 
 for i, v in pairs(cmds) do
